@@ -1,0 +1,33 @@
+name: Build Windows Go Binary
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.22' # Specify the Go version you want to use
+
+      - name: Build Windows Binary
+        run: |
+          go env -w GOOS=windows
+          go env -w GOARCH=amd64
+          go build -o myapp.exe ./path/to/main.go
+        shell: pwsh
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: myapp-windows
+          path: myapp.exe
