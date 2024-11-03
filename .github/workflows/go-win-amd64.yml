@@ -23,7 +23,7 @@ jobs:
         run: |
           go env -w GOOS=windows
           go env -w GOARCH=amd64
-          go build -o myapp.exe ./path/to/main.go
+          go build main.go
         shell: pwsh
 
       - name: Upload Artifact
