@@ -1,64 +1,64 @@
 package main
 
 import (
-			"flag"
-      "fmt"
-			"os"
-			"path/filepath"
+	"flag"
+	"fmt"
+	"os"
+	"path/filepath"
 
-      "github.com/nats-io/jwt/v2"
-      "github.com/nats-io/nkeys"
-      "gopkg.in/yaml.v2"
+	"github.com/nats-io/jwt/v2"
+	"github.com/nats-io/nkeys"
+	"gopkg.in/yaml.v2"
 )
 
 func main() {
-	outputDir := flag.String("output-dir", "", "Output directory");
+	outputDir := flag.String("output-dir", "", "Output directory")
 	flag.Parse()
 	if *outputDir == "" {
 		fmt.Println("--output-dir required")
 		os.Exit(1)
 	}
 
-  operatorKP,err := nkeys.CreateOperator()
+	operatorKP, err := nkeys.CreateOperator()
 	if err != nil {
 		panic(err)
 	}
-  operatorSeed, err := operatorKP.Seed()
+	operatorSeed, err := operatorKP.Seed()
 	if err != nil {
 		panic(err)
 	}
-  operatorSeedString := string(operatorSeed)
-  operatorPub, err := operatorKP.PublicKey()
+	operatorSeedString := string(operatorSeed)
+	operatorPub, err := operatorKP.PublicKey()
 	if err != nil {
 		panic(err)
 	}
 
-  sysAccountKP, err := nkeys.CreateAccount()
+	sysAccountKP, err := nkeys.CreateAccount()
 	if err != nil {
 		panic(err)
 	}
-  sysAccountPub, err := sysAccountKP.PublicKey()
+	sysAccountPub, err := sysAccountKP.PublicKey()
 	if err != nil {
 		panic(err)
 	}
-  sysAccountPubString := string(sysAccountPub)
+	sysAccountPubString := string(sysAccountPub)
 	sysAccountSeed, err := sysAccountKP.Seed()
 	if err != nil {
 		panic(err)
 	}
 	sysAccountSeedString := string(sysAccountSeed)
-  sysAccountClaims := jwt.NewAccountClaims(sysAccountPub)
-  sysAccountClaims.Name = "SYS"
-  sysAccountJWT, err := sysAccountClaims.Encode(operatorKP)
+	sysAccountClaims := jwt.NewAccountClaims(sysAccountPub)
+	sysAccountClaims.Name = "SYS"
+	sysAccountJWT, err := sysAccountClaims.Encode(operatorKP)
 	if err != nil {
 		panic(err)
 	}
 
-  operatorClaims := jwt.NewOperatorClaims(operatorPub)
-  operatorClaims.Name = "coflow-system"
+	operatorClaims := jwt.NewOperatorClaims(operatorPub)
+	operatorClaims.Name = "coflow-system"
 	operatorClaims.SystemAccount = sysAccountPubString
 	operatorClaims.AccountServerURL = "nats://0.0.0.0:4222"
-  operatorJWT, err := operatorClaims.Encode(operatorKP)
+	operatorJWT, err := operatorClaims.Encode(operatorKP)
 	if err != nil {
 		panic(err)
 	}
@@ -84,16 +84,16 @@ func main() {
 		panic(err)
 	}
 
-  resolverData := Config{
-    Config: ConfigWrapper{
-      Merge: Merge{
-        Operator:         operatorJWT,
-        SystemAccount:    sysAccountPubString,
-        ResolverPreload:  map[string]string{
-          sysAccountPubString: sysAccountJWT,
-        },
-      },
-    },
+	resolverData := Config{
+		Config: ConfigWrapper{
+			Merge: Merge{
+				Operator:      operatorJWT,
+				SystemAccount: sysAccountPubString,
+				ResolverPreload: map[string]string{
+					sysAccountPubString: sysAccountJWT,
+				},
+			},
+		},
 	}
 
 	// Make output directory
@@ -104,7 +104,7 @@ func main() {
 	}
 
 	// Write resolver.yaml
-  resolverYaml, err := yaml.Marshal(&resolverData)
+	resolverYaml, err := yaml.Marshal(&resolverData)
 	if err != nil {
 		panic(err)
 	}
@@ -118,7 +118,7 @@ func main() {
 	// Write operator JWT
 	operatorJWTPath := filepath.Join(*outputDir, "operator.jwt")
 	err = os.WriteFile(operatorJWTPath, []byte(operatorJWT), 0644)
-	if (err != nil) {
+	if err != nil {
 		fmt.Println("Error writing operator.jwt", err)
 		os.Exit(1)
 	}
@@ -126,7 +126,7 @@ func main() {
 	// Write operator Seed
 	operatorSeedPath := filepath.Join(*outputDir, "operator.seed")
 	err = os.WriteFile(operatorSeedPath, []byte(operatorSeedString), 0644)
-	if (err != nil) {
+	if err != nil {
 		fmt.Println("Error writing operator seed")
 		os.Exit(1)
 	}
@@ -134,7 +134,7 @@ func main() {
 	// Write account seed
 	accountSeedPath := filepath.Join(*outputDir, "account.seed")
 	err = os.WriteFile(accountSeedPath, []byte(sysAccountSeedString), 0644)
-	if (err != nil) {
+	if err != nil {
 		fmt.Println("Error writing account seed")
 		os.Exit(1)
 	}
@@ -166,18 +166,16 @@ NKEYs are sensitive and should be treated as secrets.
 	return credsContent
 }
 
-
 type Config struct {
-  Config ConfigWrapper `yaml:"config"`
+	Config ConfigWrapper `yaml:"config"`
 }
 
 type ConfigWrapper struct {
-  Merge Merge `yaml:"merge"`
+	Merge Merge `yaml:"merge"`
 }
 
 type Merge struct {
-  Operator        string `yaml:"operator"`
-  SystemAccount   string `yaml:"system_account"`
-  ResolverPreload map[string]string `yaml:"resolver_preload"`
+	Operator        string            `yaml:"operator"`
+	SystemAccount   string            `yaml:"system_account"`
+	ResolverPreload map[string]string `yaml:"resolver_preload"`
 }
-
